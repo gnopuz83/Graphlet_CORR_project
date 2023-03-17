@@ -1,4 +1,3 @@
-library(projthis)
 library(MASS)
 library(huge)
 library(Matrix)
