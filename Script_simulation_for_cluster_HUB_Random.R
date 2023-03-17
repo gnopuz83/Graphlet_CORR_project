@@ -177,7 +177,8 @@ Function_GCD_data = function(pulsar_obj, real_G){
       GCM4 = gcvec_extended_random3(graph1)
       
       dist_gcd1 = GCD(GCM2, GCM1)
-      dist_gcd2 = GCD(GCM2, GCM13)
+      #dist_gcd2 = GCD(GCM2, GCM13)
+      dist_gcd2 = GCD(GCM4, GCM13)
       dist_gcd3 = GCD(GCM3, GCM1)
       dist_gcd4 = GCD(GCM3, GCM13)
       
@@ -2454,7 +2455,7 @@ write.csv(H_res_GCD_GIP_S4_df, "simulations_GCD_GIP_S4_HUB.csv")
 
 Data1_Random = simulate_random_graph(200, 400, c(-1, -0.07, 0.07, 1), K = 10, seed = 123, scale_cov = FALSE)
 lmax <- getMaxCov(Data1_Random$simulation_data)*1.2
-lams <- getLamPath(lmax, .01, len=100)
+lams <- getLamPath(lmax, .0005, len=100)
 hugeargs <- list(lambda=lams, method = "glasso", verbose = FALSE)
 
 ub.index = 0
