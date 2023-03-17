@@ -1,3 +1,13 @@
+
+install.packages("MASS")
+install.packages("huge")
+install.packages("Matrix")
+install.packages("parallel")
+install.packages("orca")
+install.packages("batchtools")
+install.packages("matrixcalc")
+
+
 library(MASS)
 library(huge)
 library(Matrix)
