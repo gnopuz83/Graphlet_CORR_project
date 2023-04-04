@@ -2998,8 +2998,8 @@ for(i in GCD_GIP_results_strategy6_LC){
   H_res_GCD_GIP_S6_LC = cbind(H_res_GCD_GIP_S6_LC, i)
 }
 
-H_res_GCD_GIP_S6_df = as.data.frame(H_res_GCD_GIP_S6)
-colnames(H_res_GCD_GIP_S6_df) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+H_res_GCD_GIP_S6_df_LC = as.data.frame(H_res_GCD_GIP_S6_LC)
+colnames(H_res_GCD_GIP_S6_df_LC) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
 
 
 
@@ -3059,7 +3059,7 @@ write.csv(H_res_GCD_GIP_S6_df_LC, "simulations_GCD_GIP_S6_HUB_LC.csv")
 
 
 Data1_Random = simulate_random_graph(200, 400, c(-1, -0.09, 0.09, 1), K = 50, seed = 123, scale_cov = FALSE)
-lmax <- getMaxCov(Data1_Random$simulation_data)*2.2
+lmax <- getMaxCov(Data1_Random$simulation_data)*1.8
 lams <- getLamPath(lmax, .001, len=100)
 hugeargs <- list(lambda=lams, method = "glasso", verbose = FALSE)
 
