@@ -5,3 +5,7 @@ Loading required package: parallel
 Loading required package: orca
 Loading required package: batchtools
 Loading required package: matrixcalc
+Error in names(x) <- value : 
+  'names' attribute [10] must be the same length as the vector [0]
+Calls: colnames<-
+Execution halted
