@@ -22,7 +22,9 @@ if(!require(batchtools)){
 if(!require(matrixcalc)){
   install.packages("matrixcalc")
 }
-
+if(!require(latentcor)){
+  install.packages("latentcor")
+}
 
 
 library(MASS)
@@ -32,6 +34,7 @@ library(parallel)
 library(orca)
 library(batchtools)
 library(matrixcalc)
+library(latentcor)
 
 Hub_graph = function(d, s = 20){
   
@@ -77,7 +80,7 @@ simulate_HUB_graph = function(n, d ,rho_hub = 0.22, s = 20, seed = 123, K = 100,
 }
 
 
-GCD_oracle_random = function(True_graph, pulsar_obj, GC_fun, GCF = F){
+GCD_oracle_random = function(True_graph, pulsar_obj, GC_fun, GCF = F, LC=FALSE){
   
   path_1 = c()
   
@@ -88,7 +91,12 @@ GCD_oracle_random = function(True_graph, pulsar_obj, GC_fun, GCF = F){
   if(GCF ==T){
     GCM1 = GC_fun(G1)
   }else{
-    GCM1 = gcvec_extended_random3(G1)
+    
+    if(LC==TRUE){
+      GCM1 = gcvec_extended_random3_LC(G1)
+    }else{
+      GCM1 = gcvec_extended_random3(G1)
+    }
   }
   
   opt_lambda = pulsar_obj$stars$opt.index
@@ -107,7 +115,7 @@ GCD_oracle_random = function(True_graph, pulsar_obj, GC_fun, GCF = F){
 
 
 
-GCD_oracle_random_nothing = function(True_graph, pulsar_obj, GC_fun, GCF = F){
+GCD_oracle_random_nothing = function(True_graph, pulsar_obj, GC_fun, GCF = F, LC = F){
   
   path_1 = c()
   
@@ -118,7 +126,11 @@ GCD_oracle_random_nothing = function(True_graph, pulsar_obj, GC_fun, GCF = F){
   if(GCF ==T){
     GCM1 = GC_fun(G1)
   }else{
+    if(LC==TRUE){
+      GCM1 = gcvec_extended_random1_LC(G1)
+    }else{
     GCM1 = gcvec_extended_random1(G1)
+    }
   }
   
   opt_lambda = pulsar_obj$stars$opt.index
@@ -134,6 +146,7 @@ GCD_oracle_random_nothing = function(True_graph, pulsar_obj, GC_fun, GCF = F){
   pulsar_obj$stars$opt.index = opt_lambda
   return(path_1)
 }
+
 
 
 
@@ -180,6 +193,14 @@ Function_GCD_data = function(pulsar_obj, real_G){
   mean_gcd4 = c()
   mean_gcd5 = c()
   mean_gcd6 = c()
+  
+  mean_gcd1_LC = c()
+  mean_gcd2_LC = c()
+  mean_gcd3_LC = c()
+  mean_gcd4_LC = c()
+  mean_gcd5_LC = c()
+  mean_gcd6_LC = c()
+  
   HD_mean = c()
   
   tot_df1 = list()
@@ -192,6 +213,13 @@ Function_GCD_data = function(pulsar_obj, real_G){
     sub_df5 = c()
     sub_df6 = c()
     
+    sub_df1_LC = c()
+    sub_df2_LC = c()
+    sub_df3_LC = c()
+    sub_df4_LC = c()
+    sub_df5_LC = c()
+    sub_df6_LC = c()
+    
     tot_GCM = list()
     
     HD_df1 = c()
@@ -202,6 +230,13 @@ Function_GCD_data = function(pulsar_obj, real_G){
     GCM_random = gcvec_extended_random2(real_G)
     GCM13 = gcvec_extended_random3(real_G)
     GCM_replace_zeros = gcvec_extended_random_replace_the_zeros(real_G)
+    
+    
+    GCM1_LC = gcvec_extended_random1_LC(real_G)
+    GCM_random_LC = gcvec_extended_random2_LC(real_G)
+    GCM13_LC = gcvec_extended_random3_LC(real_G)
+    GCM_replace_zeros_LC = gcvec_extended_random_replace_the_zeros_LC(real_G)
+    
     C = 1
     
     for(graph1 in lambda_sub){
@@ -210,6 +245,12 @@ Function_GCD_data = function(pulsar_obj, real_G){
       GCM3 = gcvec_extended_random2(graph1)
       GCM4 = gcvec_extended_random3(graph1)
       GCM_replace_zeros_in_subsampling = gcvec_extended_random_replace_the_zeros(graph1)
+      
+      GCM2_LC = gcvec_extended_random1_LC(graph1)
+      GCM3_LC = gcvec_extended_random2_LC(graph1)
+      GCM4_LC = gcvec_extended_random3_LC(graph1)
+      GCM_replace_zeros_in_subsampling_LC = gcvec_extended_random_replace_the_zeros_LC(graph1)
+      
       dist_gcd1 = GCD(GCM2, GCM1)
       #dist_gcd2 = GCD(GCM2, GCM13)
       dist_gcd2 = GCD(GCM1, GCM3)
@@ -217,6 +258,15 @@ Function_GCD_data = function(pulsar_obj, real_G){
       dist_gcd4 = GCD(GCM3, GCM13)
       dist_gcd5 = GCD(GCM3, GCM_random)
       dist_gcd6 = GCD(GCM_replace_zeros, GCM_replace_zeros_in_subsampling)
+      
+      
+      dist_gcd1_LC = GCD(GCM2_LC, GCM1_LC)
+      dist_gcd2_LC = GCD(GCM1_LC, GCM3_LC)
+      dist_gcd3_LC = GCD(GCM4_LC, GCM13_LC)
+      dist_gcd4_LC = GCD(GCM3_LC, GCM13_LC)
+      dist_gcd5_LC = GCD(GCM3_LC, GCM_random_LC)
+      dist_gcd6_LC = GCD(GCM_replace_zeros_LC, GCM_replace_zeros_in_subsampling_LC)
+      
       
       HD1 = Hamming_distance(graph1, real_G)
       #print(dist_gcd)
@@ -226,6 +276,14 @@ Function_GCD_data = function(pulsar_obj, real_G){
       sub_df4 = c(sub_df4, dist_gcd4)
       sub_df5 = c(sub_df5, dist_gcd5)
       sub_df6 = c(sub_df6, dist_gcd6)
+      
+      sub_df1_LC = c(sub_df1_LC, dist_gcd1_LC)
+      sub_df2_LC = c(sub_df2_LC, dist_gcd2_LC)
+      sub_df3_LC = c(sub_df3_LC, dist_gcd3_LC)
+      sub_df4_LC = c(sub_df4_LC, dist_gcd4_LC)
+      sub_df5_LC = c(sub_df5_LC, dist_gcd5_LC)
+      sub_df6_LC = c(sub_df6_LC, dist_gcd6_LC)
+      
       HD_df1 = c(HD_df1, HD1)
       tot_GCM$GCM1[[C]] = GCM2
       tot_GCM$GCM2[[C]] = GCM3
@@ -247,6 +305,13 @@ Function_GCD_data = function(pulsar_obj, real_G){
     mean_gcd5 = c(mean_gcd5, mean(sub_df5))
     mean_gcd6 = c(mean_gcd6, mean(sub_df6))
     
+    mean_gcd1_LC = c(mean_gcd1_LC, mean(sub_df1_LC))
+    mean_gcd2_LC = c(mean_gcd2_LC, mean(sub_df2_LC))
+    mean_gcd3_LC = c(mean_gcd3_LC, mean(sub_df3_LC))
+    mean_gcd4_LC = c(mean_gcd4_LC, mean(sub_df4_LC))
+    mean_gcd5_LC = c(mean_gcd5_LC, mean(sub_df5_LC))
+    mean_gcd6_LC = c(mean_gcd6_LC, mean(sub_df6_LC))
+    
     HD_mean = c(HD_mean, mean(HD_df1))
   }
   
@@ -255,6 +320,15 @@ Function_GCD_data = function(pulsar_obj, real_G){
   tot_df1$mean_gcd3 = mean_gcd3
   tot_df1$mean_gcd4 = mean_gcd4
   tot_df1$mean_gcd5 = mean_gcd5
+  tot_df1$mean_gcd6 = mean_gcd6
+  
+  tot_df1$mean_gcd1_LC = mean_gcd1_LC
+  tot_df1$mean_gcd2_LC = mean_gcd2_LC
+  tot_df1$mean_gcd3_LC = mean_gcd3_LC
+  tot_df1$mean_gcd4_LC = mean_gcd4_LC
+  tot_df1$mean_gcd5_LC = mean_gcd5_LC
+  tot_df1$mean_gcd6_LC = mean_gcd6_LC
+  
   tot_df1$HD_mean_subsampling = HD_mean
   
   return(tot_df1)
@@ -439,6 +513,38 @@ gcvec_extended_random1 = function(G, orbind=c(0, 2, 5, 7, 8, 10, 11, 6, 9, 4, 1)
 }
 
 
+gcvec_extended_random1_LC = function(G, orbind=c(0, 2, 5, 7, 8, 10, 11, 6, 9, 4, 1)+1, five = FALSE){
+  
+  diag(G) = 0
+  
+  Elist <- .adj2elist(G)
+  n <- length(orbind)
+  if (ncol(Elist) < 1 || nrow(Elist) < 1) {
+    return(rep(0, n*(n-1)/2))
+  }
+  
+  p <- ncol(G)
+  if(five == TRUE){
+    gcount <- orca::count5(Elist)
+  }else{
+    gcount <- orca::count4(Elist)
+  }
+  ## expand missing nodes
+  buffer <- matrix(0, nrow=p-nrow(gcount), ncol=ncol(gcount))
+  gcount <- rbind(gcount, buffer)
+  # deprecate direct call to count4 for CRAN submission
+  #  gcount <- .C("count4", Elist, dim(Elist),
+  #      orbits = matrix(0, nrow = max(Elist), ncol = 15), PACKAGE="orca")$orbits
+  ##  # warnings here are due to std dev == 0. This almost always occurs for a completely connected
+  ## or completely empty graph and can be safely suppressed.
+  
+  matrix = rbind(gcount[,orbind],1) 
+  gcor <- suppressWarnings(latentcor(matrix))
+  R1 = gcor$R
+  return(R1[upper.tri(R1)])
+}
+
+
 
 gcvec_extended_random = function(G, orbind=c(0, 2, 5, 7, 8, 10, 11, 6, 9, 4, 1)+1, five = FALSE){
   
@@ -515,6 +621,46 @@ gcvec_extended_random3 = function(G, orbind=c(0, 2, 5, 7, 8, 10, 11, 6, 9, 4, 1)
 }
 
 
+gcvec_extended_random3_LC = function(G, orbind=c(0, 2, 5, 7, 8, 10, 11, 6, 9, 4, 1)+1, five = FALSE){
+  
+  diag(G) = 0
+  
+  Elist <- .adj2elist(G)
+  n <- length(orbind)
+  if (ncol(Elist) < 1 || nrow(Elist) < 1) {
+    return(rep(0, n*(n-1)/2))
+  }
+  
+  p <- ncol(G)
+  if(five == TRUE){
+    gcount <- orca::count5(Elist)
+  }else{
+    gcount <- orca::count4(Elist)
+  }
+  ## expand missing nodes
+  
+  for(i in colnames(gcount)){
+    if(sum(gcount[,i])==0){
+      random_vector = runif(dim(gcount)[1],0, 0.001)
+      gcount[,i] = random_vector
+    }
+  }
+  
+  buffer <- matrix(0, nrow=p-nrow(gcount), ncol=ncol(gcount))
+  gcount <- rbind(gcount, buffer)
+  # deprecate direct call to count4 for CRAN submission
+  #  gcount <- .C("count4", Elist, dim(Elist),
+  #      orbits = matrix(0, nrow = max(Elist), ncol = 15), PACKAGE="orca")$orbits
+  ##  # warnings here are due to std dev == 0. This almost always occurs for a completely connected
+  ## or completely empty graph and can be safely suppressed.
+  
+  matrix = rbind(gcount[,orbind],1) 
+  gcor <- suppressWarnings(latentcor(matrix))
+  R1 = gcor$R
+  return(R1[upper.tri(R1)])
+}
+
+
 
 
 gcvec_extended_random2 = function(G, orbind=c(0, 2, 5, 7, 8, 10, 11, 6, 9, 4, 1)+1, five = FALSE){
@@ -547,6 +693,41 @@ gcvec_extended_random2 = function(G, orbind=c(0, 2, 5, 7, 8, 10, 11, 6, 9, 4, 1)
   gcor <- suppressWarnings(cor(add_1_minus1, method='spearman'))
   gcor[upper.tri(gcor)]
 }
+
+
+
+gcvec_extended_random2_LC = function(G, orbind=c(0, 2, 5, 7, 8, 10, 11, 6, 9, 4, 1)+1, five = FALSE){
+  
+  diag(G) = 0
+  
+  Elist <- .adj2elist(G)
+  n <- length(orbind)
+  if (ncol(Elist) < 1 || nrow(Elist) < 1) {
+    return(rep(0, n*(n-1)/2))
+  }
+  
+  p <- ncol(G)
+  if(five == TRUE){
+    gcount <- orca::count5(Elist)
+  }else{
+    gcount <- orca::count4(Elist)
+  }
+  ## expand missing nodes
+  buffer <- matrix(0, nrow=p-nrow(gcount), ncol=ncol(gcount))
+  gcount <- rbind(gcount, buffer)
+  # deprecate direct call to count4 for CRAN submission
+  #  gcount <- .C("count4", Elist, dim(Elist),
+  #      orbits = matrix(0, nrow = max(Elist), ncol = 15), PACKAGE="orca")$orbits
+  ##  # warnings here are due to std dev == 0. This almost always occurs for a completely connected
+  ## or completely empty graph and can be safely suppressed.
+  add_1_minus1 = gcount[,orbind]
+  minus_1_1 = matrix(runif(length(orbind)*dim(gcount)[1],0,0.01), nrow = dim(gcount)[1], ncol = length(orbind))
+  add_1_minus1 = add_1_minus1 + minus_1_1
+  
+  gcor <- suppressWarnings(latentcor(add_1_minus1))
+  return(gcor$R[upper.tri(gcor$R)])
+  }
+
 
 
 
@@ -591,6 +772,48 @@ gcvec_extended_random_replace_the_zeros = function(G, orbind=c(0, 2, 5, 7, 8, 10
   gcor[upper.tri(gcor)]
 }
 
+
+
+gcvec_extended_random_replace_the_zeros_LC = function(G, orbind=c(0, 2, 5, 7, 8, 10, 11, 6, 9, 4, 1)+1, five = FALSE){
+  
+  diag(G) = 0
+  
+  Elist <- .adj2elist(G)
+  n <- length(orbind)
+  if (ncol(Elist) < 1 || nrow(Elist) < 1) {
+    return(rep(0, n*(n-1)/2))
+  }
+  
+  p <- ncol(G)
+  if(five == TRUE){
+    gcount <- orca::count5(Elist)
+  }else{
+    gcount <- orca::count4(Elist)
+  }
+  
+  
+  for (i in colnames(gcount)) {
+    for (j in 1:dim(gcount)[1]){
+      if(sum(gcount[j,i])==0){
+        gcount[j,i] = runif(1, 0.0001, 0.0002)
+      }
+      
+    }
+  }
+  
+  ## expand missing nodes
+  buffer <- matrix(0, nrow=p-nrow(gcount), ncol=ncol(gcount))
+  gcount <- rbind(gcount, buffer)
+  # deprecate direct call to count4 for CRAN submission
+  #  gcount <- .C("count4", Elist, dim(Elist),
+  #      orbits = matrix(0, nrow = max(Elist), ncol = 15), PACKAGE="orca")$orbits
+  ##  # warnings here are due to std dev == 0. This almost always occurs for a completely connected
+  ## or completely empty graph and can be safely suppressed.
+  matrix = rbind(gcount[,orbind],1) 
+  add_1_minus1 = matrix
+  gcor <- suppressWarnings(latentcor(add_1_minus1))
+  return(gcor$R[upper.tri(gcor$R)])
+}
 
 
 
@@ -2185,6 +2408,8 @@ gcd.stability_extended <- function(premerge, thresh, rep.num, p, nlams, known_gr
 
 
 
+
+
 Data1_HUB = simulate_HUB_graph(200, 400,rho_hub = 0.2, seed = 123)
 lmax <- getMaxCov(Data1_HUB$simulation_data)
 lams <- getLamPath(lmax, .001, len=100)
@@ -2200,6 +2425,12 @@ GCD_Oracle_results_strategy4 = list()
 GCD_Oracle_results_strategy5 = list()
 GCD_Oracle_results_strategy6 = list()
 
+GCD_Oracle_results_strategy1_LC = list()
+GCD_Oracle_results_strategy2_LC = list()
+GCD_Oracle_results_strategy3_LC = list()
+GCD_Oracle_results_strategy4_LC = list()
+GCD_Oracle_results_strategy5_LC = list()
+GCD_Oracle_results_strategy6_LC = list()
 
 Hamming_dist_res = list()
 
@@ -2209,6 +2440,13 @@ GCD_GIP_results_strategy3 = list()
 GCD_GIP_results_strategy4 = list()
 GCD_GIP_results_strategy5 = list()
 GCD_GIP_results_strategy6 = list()
+
+GCD_GIP_results_strategy1_LC = list()
+GCD_GIP_results_strategy2_LC = list()
+GCD_GIP_results_strategy3_LC = list()
+GCD_GIP_results_strategy4_LC = list()
+GCD_GIP_results_strategy5_LC = list()
+GCD_GIP_results_strategy6_LC = list()
 
 Stars_01_res = list()
 Stars_005_res = list()
@@ -2220,12 +2458,27 @@ GCD_GIP_res_strategy4 = list()
 GCD_GIP_res_strategy5 = list()
 GCD_GIP_res_strategy6 = list()
 
+GCD_GIP_res_strategy1_LC = list()
+GCD_GIP_res_strategy2_LC = list()
+GCD_GIP_res_strategy3_LC = list()
+GCD_GIP_res_strategy4_LC = list()
+GCD_GIP_res_strategy5_LC = list()
+GCD_GIP_res_strategy6_LC = list()
+
 GCD_Oracle_res_strategy1 = list()
 GCD_Oracle_res_strategy2 = list()
 GCD_Oracle_res_strategy3 = list()
 GCD_Oracle_res_strategy4 = list()
 GCD_Oracle_res_strategy5 = list()
 GCD_Oracle_res_strategy6 = list()
+
+
+GCD_Oracle_res_strategy1_LC = list()
+GCD_Oracle_res_strategy2_LC = list()
+GCD_Oracle_res_strategy3_LC = list()
+GCD_Oracle_res_strategy4_LC = list()
+GCD_Oracle_res_strategy5_LC = list()
+GCD_Oracle_res_strategy6_LC = list()
 
 for(i in 2:11){
   
@@ -2247,6 +2500,19 @@ for(i in 2:11){
   GCD_Oracle_400_HUB_scheme_replace_zeros = GCD_oracle_random(Data1_HUB$real_graph, pulsar_gip_400_HUB_gl,gcvec_extended_random_replace_the_zeros, GCF = T)
   
   
+  
+  GCD_Oracle_400_HUB_scheme_nothing_LC = GCD_oracle_random_nothing(Data1_HUB$real_graph, pulsar_gip_400_HUB_gl,gcvec_extended_random1_LC, LC=TRUE)
+  
+  GCD_Oracle_400_HUB_scheme_random_noise_LC = GCD_oracle_random_nothing(Data1_HUB$real_graph, pulsar_gip_400_HUB_gl,gcvec_extended_random2_LC, LC=TRUE)
+  
+  GCD_Oracle_400_HUB_scheme_random_noise_both_LC = GCD_oracle_random(Data1_HUB$real_graph, pulsar_gip_400_HUB_gl,gcvec_extended_random2_LC, GCF = T)
+  
+  GCD_Oracle_400_HUB_scheme_random_vector_LC = GCD_oracle_random(Data1_HUB$real_graph, pulsar_gip_400_HUB_gl,gcvec_extended_random3_LC,LC=TRUE)
+  
+  GCD_Oracle_400_HUB_scheme_both_LC = GCD_oracle_random(Data1_HUB$real_graph, pulsar_gip_400_HUB_gl,gcvec_extended_random2_LC, LC=TRUE)
+  
+  GCD_Oracle_400_HUB_scheme_replace_zeros_LC = GCD_oracle_random(Data1_HUB$real_graph, pulsar_gip_400_HUB_gl,gcvec_extended_random_replace_the_zeros_LC, GCF = T)
+  
   #GCD GIP calculation
   
   GCD_gip_hub_400_gl = Function_GCD_data(pulsar_gip_400_HUB_gl, Data1_HUB$real_graph)
@@ -2262,6 +2528,12 @@ for(i in 2:11){
   GCD_Oracle_results_strategy5 = append(GCD_Oracle_results_strategy5, list(GCD_Oracle_400_HUB_scheme_random_noise_both))
   GCD_Oracle_results_strategy6 = append(GCD_Oracle_results_strategy6, list(GCD_Oracle_400_HUB_scheme_replace_zeros))
   
+  GCD_Oracle_results_strategy1_LC = append(GCD_Oracle_results_strategy1_LC, list(GCD_Oracle_400_HUB_scheme_nothing_LC))
+  GCD_Oracle_results_strategy2_LC = append(GCD_Oracle_results_strategy2_LC, list(GCD_Oracle_400_HUB_scheme_random_noise_LC))
+  GCD_Oracle_results_strategy3_LC = append(GCD_Oracle_results_strategy3_LC, list(GCD_Oracle_400_HUB_scheme_random_vector_LC))
+  GCD_Oracle_results_strategy4_LC = append(GCD_Oracle_results_strategy4_LC, list(GCD_Oracle_400_HUB_scheme_both_LC))
+  GCD_Oracle_results_strategy5_LC = append(GCD_Oracle_results_strategy5_LC, list(GCD_Oracle_400_HUB_scheme_random_noise_both_LC))
+  GCD_Oracle_results_strategy6_LC = append(GCD_Oracle_results_strategy6_LC, list(GCD_Oracle_400_HUB_scheme_replace_zeros_LC))
   
   #GCD oracle better results
   GCD_Oracle_res_strategy1 = append(GCD_Oracle_res_strategy1, list(HD_Hub_400[which.min(GCD_Oracle_400_HUB_scheme_nothing)]))
@@ -2270,6 +2542,13 @@ for(i in 2:11){
   GCD_Oracle_res_strategy4 = append(GCD_Oracle_res_strategy4, list(HD_Hub_400[which.min(GCD_Oracle_400_HUB_scheme_both)]))
   GCD_Oracle_res_strategy5 = append(GCD_Oracle_res_strategy5, list(HD_Hub_400[which.min(GCD_Oracle_400_HUB_scheme_random_noise_both)]))
   GCD_Oracle_res_strategy6 = append(GCD_Oracle_res_strategy6, list(HD_Hub_400[which.min(GCD_Oracle_400_HUB_scheme_replace_zeros)]))
+  
+  GCD_Oracle_res_strategy1_LC = append(GCD_Oracle_res_strategy1_LC, list(HD_Hub_400[which.min(GCD_Oracle_400_HUB_scheme_nothing_LC)]))
+  GCD_Oracle_res_strategy2_LC = append(GCD_Oracle_res_strategy2_LC, list(HD_Hub_400[which.min(GCD_Oracle_400_HUB_scheme_random_noise_LC)]))
+  GCD_Oracle_res_strategy3_LC = append(GCD_Oracle_res_strategy3_LC, list(HD_Hub_400[which.min(GCD_Oracle_400_HUB_scheme_random_vector_LC)]))
+  GCD_Oracle_res_strategy4_LC = append(GCD_Oracle_res_strategy4_LC, list(HD_Hub_400[which.min(GCD_Oracle_400_HUB_scheme_both_LC)]))
+  GCD_Oracle_res_strategy5_LC = append(GCD_Oracle_res_strategy5_LC, list(HD_Hub_400[which.min(GCD_Oracle_400_HUB_scheme_random_noise_both_LC)]))
+  GCD_Oracle_res_strategy6_LC = append(GCD_Oracle_res_strategy6_LC, list(HD_Hub_400[which.min(GCD_Oracle_400_HUB_scheme_replace_zeros_LC)]))
   
   #HD res
   
@@ -2292,6 +2571,13 @@ for(i in 2:11){
   GCD_GIP_results_strategy6 = append(GCD_GIP_results_strategy6, list(GCD_gip_hub_400_gl$mean_gcd6))
   
   
+  GCD_GIP_results_strategy1_LC = append(GCD_GIP_results_strategy1_LC, list(GCD_gip_hub_400_gl$mean_gcd1_LC))
+  GCD_GIP_results_strategy2_LC = append(GCD_GIP_results_strategy2_LC, list(GCD_gip_hub_400_gl$mean_gcd2_LC))
+  GCD_GIP_results_strategy3_LC = append(GCD_GIP_results_strategy3_LC, list(GCD_gip_hub_400_gl$mean_gcd3_LC))
+  GCD_GIP_results_strategy4_LC = append(GCD_GIP_results_strategy4_LC, list(GCD_gip_hub_400_gl$mean_gcd4_LC))
+  GCD_GIP_results_strategy5_LC = append(GCD_GIP_results_strategy5_LC, list(GCD_gip_hub_400_gl$mean_gcd5_LC))
+  GCD_GIP_results_strategy6_LC = append(GCD_GIP_results_strategy6_LC, list(GCD_gip_hub_400_gl$mean_gcd6_LC))
+  
   #GCD GIP res
   
   GCD_GIP_res_strategy1 = append(GCD_GIP_res_strategy1, list(HD_Hub_400[which.min(GCD_gip_hub_400_gl$mean_gcd1)]))
@@ -2301,6 +2587,12 @@ for(i in 2:11){
   GCD_GIP_res_strategy5 = append(GCD_GIP_res_strategy5, list(HD_Hub_400[which.min(GCD_gip_hub_400_gl$mean_gcd5)]))
   GCD_GIP_res_strategy6 = append(GCD_GIP_res_strategy6, list(HD_Hub_400[which.min(GCD_gip_hub_400_gl$mean_gcd6)]))
   
+  GCD_GIP_res_strategy1_LC = append(GCD_GIP_res_strategy1_LC, list(HD_Hub_400[which.min(GCD_gip_hub_400_gl$mean_gcd1_LC)]))
+  GCD_GIP_res_strategy2_LC = append(GCD_GIP_res_strategy2_LC, list(HD_Hub_400[which.min(GCD_gip_hub_400_gl$mean_gcd2_LC)]))
+  GCD_GIP_res_strategy3_LC = append(GCD_GIP_res_strategy3_LC, list(HD_Hub_400[which.min(GCD_gip_hub_400_gl$mean_gcd3_LC)]))
+  GCD_GIP_res_strategy4_LC = append(GCD_GIP_res_strategy4_LC, list(HD_Hub_400[which.min(GCD_gip_hub_400_gl$mean_gcd4_LC)]))
+  GCD_GIP_res_strategy5_LC = append(GCD_GIP_res_strategy5_LC, list(HD_Hub_400[which.min(GCD_gip_hub_400_gl$mean_gcd5_LC)]))
+  GCD_GIP_res_strategy6_LC = append(GCD_GIP_res_strategy6_LC, list(HD_Hub_400[which.min(GCD_gip_hub_400_gl$mean_gcd6_LC)]))
   
 }
 
@@ -2313,6 +2605,14 @@ vector_GCD_GIP_res_strategy3 = c()
 vector_GCD_GIP_res_strategy4 = c()
 vector_GCD_GIP_res_strategy5 = c()
 vector_GCD_GIP_res_strategy6 = c()
+
+
+vector_GCD_GIP_res_strategy1_LC = c()
+vector_GCD_GIP_res_strategy2_LC = c()
+vector_GCD_GIP_res_strategy3_LC = c()
+vector_GCD_GIP_res_strategy4_LC = c()
+vector_GCD_GIP_res_strategy5_LC = c()
+vector_GCD_GIP_res_strategy6_LC = c()
 
 
 for(i in GCD_GIP_res_strategy1){
@@ -2339,12 +2639,50 @@ for(i in GCD_GIP_res_strategy6){
   vector_GCD_GIP_res_strategy6 = c(vector_GCD_GIP_res_strategy6,i)
 }
 
+
+
+for(i in GCD_GIP_res_strategy1_LC){
+  vector_GCD_GIP_res_strategy1_LC = c(vector_GCD_GIP_res_strategy1_LC,i)
+}
+
+for(i in GCD_GIP_res_strategy2_LC){
+  vector_GCD_GIP_res_strategy2_LC = c(vector_GCD_GIP_res_strategy2_LC,i)
+}
+
+for(i in GCD_GIP_res_strategy3_LC){
+  vector_GCD_GIP_res_strategy3_LC = c(vector_GCD_GIP_res_strategy3_LC,i)
+}
+
+for(i in GCD_GIP_res_strategy4_LC){
+  vector_GCD_GIP_res_strategy4_LC = c(vector_GCD_GIP_res_strategy4_LC,i)
+}
+
+for(i in GCD_GIP_res_strategy5_LC){
+  vector_GCD_GIP_res_strategy5_LC = c(vector_GCD_GIP_res_strategy5_LC,i)
+}
+
+for(i in GCD_GIP_res_strategy6_LC){
+  vector_GCD_GIP_res_strategy6_LC = c(vector_GCD_GIP_res_strategy6_LC,i)
+}
+
+
+
+
+
 vector_GCD_Oracle_res_strategy1 = c()
 vector_GCD_Oracle_res_strategy2 = c()
 vector_GCD_Oracle_res_strategy3 = c()
 vector_GCD_Oracle_res_strategy4 = c()
 vector_GCD_Oracle_res_strategy5 = c()
 vector_GCD_Oracle_res_strategy6 = c()
+
+
+vector_GCD_Oracle_res_strategy1_LC = c()
+vector_GCD_Oracle_res_strategy2_LC = c()
+vector_GCD_Oracle_res_strategy3_LC = c()
+vector_GCD_Oracle_res_strategy4_LC = c()
+vector_GCD_Oracle_res_strategy5_LC = c()
+vector_GCD_Oracle_res_strategy6_LC = c()
 
 
 for(i in GCD_Oracle_res_strategy1){
@@ -2371,6 +2709,37 @@ for(i in GCD_Oracle_res_strategy6){
   vector_GCD_Oracle_res_strategy6 = c(vector_GCD_Oracle_res_strategy6,i)
 }
 
+
+
+for(i in GCD_Oracle_res_strategy1_LC){
+  vector_GCD_Oracle_res_strategy1_LC = c(vector_GCD_Oracle_res_strategy1_LC,i)
+}
+
+for(i in GCD_Oracle_res_strategy2_LC){
+  vector_GCD_Oracle_res_strategy2_LC = c(vector_GCD_Oracle_res_strategy2_LC,i)
+}
+
+for(i in GCD_Oracle_res_strategy3_LC){
+  vector_GCD_Oracle_res_strategy3_LC = c(vector_GCD_Oracle_res_strategy3_LC,i)
+}
+
+for(i in GCD_Oracle_res_strategy4_LC){
+  vector_GCD_Oracle_res_strategy4_LC = c(vector_GCD_Oracle_res_strategy4_LC,i)
+}
+
+for(i in GCD_Oracle_res_strategy5_LC){
+  vector_GCD_Oracle_res_strategy5_LC = c(vector_GCD_Oracle_res_strategy5_LC,i)
+}
+
+for(i in GCD_Oracle_res_strategy6_LC){
+  vector_GCD_Oracle_res_strategy6_LC = c(vector_GCD_Oracle_res_strategy6_LC,i)
+}
+
+
+
+
+
+
 vector_Stars_01_res = c()
 vector_Stars_005_res = c()
 
@@ -2393,6 +2762,8 @@ for(i in Hamming_dist_res){
 
 res_tot_hub = cbind(vector_GCD_GIP_res_strategy1, vector_GCD_GIP_res_strategy2, vector_GCD_GIP_res_strategy3, vector_GCD_GIP_res_strategy4,vector_GCD_GIP_res_strategy5, vector_GCD_GIP_res_strategy6,
                        vector_GCD_Oracle_res_strategy1, vector_GCD_Oracle_res_strategy2, vector_GCD_Oracle_res_strategy3, vector_GCD_Oracle_res_strategy4,vector_GCD_Oracle_res_strategy5, vector_GCD_Oracle_res_strategy6,
+                    vector_GCD_GIP_res_strategy1_LC, vector_GCD_GIP_res_strategy2_LC, vector_GCD_GIP_res_strategy3_LC, vector_GCD_GIP_res_strategy4_LC,vector_GCD_GIP_res_strategy5_LC, vector_GCD_GIP_res_strategy6_LC,
+                    vector_GCD_Oracle_res_strategy1_LC, vector_GCD_Oracle_res_strategy2_LC, vector_GCD_Oracle_res_strategy3_LC, vector_GCD_Oracle_res_strategy4_LC,vector_GCD_Oracle_res_strategy5_LC, vector_GCD_Oracle_res_strategy6_LC,
                        vector_Stars_005_res, vector_Stars_01_res, Best_HD)
 
 res_tot_hub_df = as.data.frame(res_tot_hub)
@@ -2463,6 +2834,65 @@ H_res_GCD_Oracle_S6_df = as.data.frame(H_res_GCD_Oracle_S6)
 colnames(H_res_GCD_Oracle_S6_df) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
 
 
+
+H_res_GCD_Oracle_S1_LC = c()
+for(i in GCD_Oracle_results_strategy1_LC){
+  H_res_GCD_Oracle_S1_LC = cbind(H_res_GCD_Oracle_S1_LC, i)
+}
+
+H_res_GCD_Oracle_S1_df_LC = as.data.frame(H_res_GCD_Oracle_S1_LC)
+colnames(H_res_GCD_Oracle_S1_df_LC) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+
+
+H_res_GCD_Oracle_S2_LC = c()
+for(i in GCD_Oracle_results_strategy2_LC){
+  H_res_GCD_Oracle_S2_LC = cbind(H_res_GCD_Oracle_S2_LC, i)
+}
+
+H_res_GCD_Oracle_S2_df_LC = as.data.frame(H_res_GCD_Oracle_S2_LC)
+colnames(H_res_GCD_Oracle_S2_df_LC) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+
+
+H_res_GCD_Oracle_S3_LC = c()
+for(i in GCD_Oracle_results_strategy3_LC){
+  H_res_GCD_Oracle_S3_LC = cbind(H_res_GCD_Oracle_S3_LC, i)
+}
+
+H_res_GCD_Oracle_S3_df_LC = as.data.frame(H_res_GCD_Oracle_S3_LC)
+colnames(H_res_GCD_Oracle_S3_df_LC) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+
+
+H_res_GCD_Oracle_S4_LC = c()
+for(i in GCD_Oracle_results_strategy4_LC){
+  H_res_GCD_Oracle_S4_LC = cbind(H_res_GCD_Oracle_S4_LC, i)
+}
+
+H_res_GCD_Oracle_S4_df_LC = as.data.frame(H_res_GCD_Oracle_S4_LC)
+colnames(H_res_GCD_Oracle_S4_df_LC) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+
+
+H_res_GCD_Oracle_S5_LC = c()
+for(i in GCD_Oracle_results_strategy5_LC){
+  H_res_GCD_Oracle_S5_LC = cbind(H_res_GCD_Oracle_S5_LC, i)
+}
+
+H_res_GCD_Oracle_S5_df_LC = as.data.frame(H_res_GCD_Oracle_S5_LC)
+colnames(H_res_GCD_Oracle_S5_df_LC) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+
+
+H_res_GCD_Oracle_S6_LC = c()
+for(i in GCD_Oracle_results_strategy6_LC){
+  H_res_GCD_Oracle_S6_LC = cbind(H_res_GCD_Oracle_S6_LC, i)
+}
+
+H_res_GCD_Oracle_S6_df_LC = as.data.frame(H_res_GCD_Oracle_S6_LC)
+colnames(H_res_GCD_Oracle_S6_df_LC) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+
+
+
+
+
+
 H_res_GCD_GIP_S1 = c()
 for(i in GCD_GIP_results_strategy1){
   H_res_GCD_GIP_S1 = cbind(H_res_GCD_GIP_S1, i)
@@ -2518,6 +2948,63 @@ colnames(H_res_GCD_GIP_S6_df) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6",
 
 
 
+H_res_GCD_GIP_S1_LC = c()
+for(i in GCD_GIP_results_strategy1_LC){
+  H_res_GCD_GIP_S1_LC = cbind(H_res_GCD_GIP_S1_LC, i)
+}
+
+H_res_GCD_GIP_S1_df_LC = as.data.frame(H_res_GCD_GIP_S1_LC)
+colnames(H_res_GCD_GIP_S1_df_LC) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+
+
+H_res_GCD_GIP_S2_LC = c()
+for(i in GCD_GIP_results_strategy2_LC){
+  H_res_GCD_GIP_S2_LC = cbind(H_res_GCD_GIP_S2_LC, i)
+}
+
+H_res_GCD_GIP_S2_df_LC = as.data.frame(H_res_GCD_GIP_S2_LC)
+colnames(H_res_GCD_GIP_S2_df_LC) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+
+
+
+H_res_GCD_GIP_S3_LC = c()
+for(i in GCD_GIP_results_strategy3_LC){
+  H_res_GCD_GIP_S3_LC = cbind(H_res_GCD_GIP_S3_LC, i)
+}
+
+H_res_GCD_GIP_S3_df_LC = as.data.frame(H_res_GCD_GIP_S3_LC)
+colnames(H_res_GCD_GIP_S3_df_LC) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+
+
+H_res_GCD_GIP_S4_LC = c()
+for(i in GCD_GIP_results_strategy4_LC){
+  H_res_GCD_GIP_S4_LC = cbind(H_res_GCD_GIP_S4_LC, i)
+}
+
+H_res_GCD_GIP_S4_df_LC = as.data.frame(H_res_GCD_GIP_S4_LC)
+colnames(H_res_GCD_GIP_S4_df_LC) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+
+
+H_res_GCD_GIP_S5_LC = c()
+for(i in GCD_GIP_results_strategy5_LC){
+  H_res_GCD_GIP_S5_LC = cbind(H_res_GCD_GIP_S5_LC, i)
+}
+
+H_res_GCD_GIP_S5_df_LC = as.data.frame(H_res_GCD_GIP_S5_LC)
+colnames(H_res_GCD_GIP_S5_df_LC) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+
+H_res_GCD_GIP_S6_LC = c()
+for(i in GCD_GIP_results_strategy6_LC){
+  H_res_GCD_GIP_S6_LC = cbind(H_res_GCD_GIP_S6_LC, i)
+}
+
+H_res_GCD_GIP_S6_df = as.data.frame(H_res_GCD_GIP_S6)
+colnames(H_res_GCD_GIP_S6_df) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+
+
+
+
+
 
 
 write.csv(res_tot_hub_df, "tot_results_HUB_simulation.csv")
@@ -2531,6 +3018,13 @@ write.csv(H_res_GCD_Oracle_S4_df, "simulations_GCD_Oracle_S4_HUB.csv")
 write.csv(H_res_GCD_Oracle_S5_df, "simulations_GCD_Oracle_S5_HUB.csv")
 write.csv(H_res_GCD_Oracle_S6_df, "simulations_GCD_Oracle_S6_HUB.csv")
 
+write.csv(H_res_GCD_Oracle_S1_df_LC, "simulations_GCD_Oracle_S1_HUB_LC.csv")
+write.csv(H_res_GCD_Oracle_S2_df_LC, "simulations_GCD_Oracle_S2_HUB_LC.csv")
+write.csv(H_res_GCD_Oracle_S3_df_LC, "simulations_GCD_Oracle_S3_HUB_LC.csv")
+write.csv(H_res_GCD_Oracle_S4_df_LC, "simulations_GCD_Oracle_S4_HUB_LC.csv")
+write.csv(H_res_GCD_Oracle_S5_df_LC, "simulations_GCD_Oracle_S5_HUB_LC.csv")
+write.csv(H_res_GCD_Oracle_S6_df_LC, "simulations_GCD_Oracle_S6_HUB_LC.csv")
+
 
 write.csv(H_res_GCD_GIP_S1_df, "simulations_GCD_GIP_S1_HUB.csv")
 write.csv(H_res_GCD_GIP_S2_df, "simulations_GCD_GIP_S2_HUB.csv")
@@ -2539,7 +3033,12 @@ write.csv(H_res_GCD_GIP_S4_df, "simulations_GCD_GIP_S4_HUB.csv")
 write.csv(H_res_GCD_GIP_S5_df, "simulations_GCD_GIP_S5_HUB.csv")
 write.csv(H_res_GCD_GIP_S6_df, "simulations_GCD_GIP_S6_HUB.csv")
 
-
+write.csv(H_res_GCD_GIP_S1_df_LC, "simulations_GCD_GIP_S1_HUB_LC.csv")
+write.csv(H_res_GCD_GIP_S2_df_LC, "simulations_GCD_GIP_S2_HUB_LC.csv")
+write.csv(H_res_GCD_GIP_S3_df_LC, "simulations_GCD_GIP_S3_HUB_LC.csv")
+write.csv(H_res_GCD_GIP_S4_df_LC, "simulations_GCD_GIP_S4_HUB_LC.csv")
+write.csv(H_res_GCD_GIP_S5_df_LC, "simulations_GCD_GIP_S5_HUB_LC.csv")
+write.csv(H_res_GCD_GIP_S6_df_LC, "simulations_GCD_GIP_S6_HUB_LC.csv")
 
 
 
@@ -2575,6 +3074,14 @@ R_GCD_Oracle_results_strategy5 = list()
 R_GCD_Oracle_results_strategy6 = list()
 
 
+R_GCD_Oracle_results_strategy1_LC = list()
+R_GCD_Oracle_results_strategy2_LC = list()
+R_GCD_Oracle_results_strategy3_LC = list()
+R_GCD_Oracle_results_strategy4_LC = list()
+R_GCD_Oracle_results_strategy5_LC = list()
+R_GCD_Oracle_results_strategy6_LC = list()
+
+
 R_Hamming_dist_res = list()
 
 R_GCD_GIP_results_strategy1 = list()
@@ -2583,6 +3090,13 @@ R_GCD_GIP_results_strategy3 = list()
 R_GCD_GIP_results_strategy4 = list()
 R_GCD_GIP_results_strategy5 = list()
 R_GCD_GIP_results_strategy6 = list()
+
+R_GCD_GIP_results_strategy1_LC = list()
+R_GCD_GIP_results_strategy2_LC = list()
+R_GCD_GIP_results_strategy3_LC = list()
+R_GCD_GIP_results_strategy4_LC = list()
+R_GCD_GIP_results_strategy5_LC = list()
+R_GCD_GIP_results_strategy6_LC = list()
 
 
 R_Stars_01_res = list()
@@ -2595,6 +3109,13 @@ R_GCD_GIP_res_strategy4 = list()
 R_GCD_GIP_res_strategy5 = list()
 R_GCD_GIP_res_strategy6 = list()
 
+R_GCD_GIP_res_strategy1_LC = list()
+R_GCD_GIP_res_strategy2_LC = list()
+R_GCD_GIP_res_strategy3_LC = list()
+R_GCD_GIP_res_strategy4_LC = list()
+R_GCD_GIP_res_strategy5_LC = list()
+R_GCD_GIP_res_strategy6_LC = list()
+
 
 R_GCD_Oracle_res_strategy1 = list()
 R_GCD_Oracle_res_strategy2 = list()
@@ -2602,6 +3123,14 @@ R_GCD_Oracle_res_strategy3 = list()
 R_GCD_Oracle_res_strategy4 = list()
 R_GCD_Oracle_res_strategy5 = list()
 R_GCD_Oracle_res_strategy6 = list()
+
+
+R_GCD_Oracle_res_strategy1_LC = list()
+R_GCD_Oracle_res_strategy2_LC = list()
+R_GCD_Oracle_res_strategy3_LC = list()
+R_GCD_Oracle_res_strategy4_LC = list()
+R_GCD_Oracle_res_strategy5_LC = list()
+R_GCD_Oracle_res_strategy6_LC = list()
 
 
 for(i in 2:11){
@@ -2623,6 +3152,19 @@ for(i in 2:11){
   
   R_GCD_Oracle_400_HUB_scheme_replace_zeros = GCD_oracle_random(Data1_Random$real_graph, pulsar_gip_400_Random_gl,gcvec_extended_random_replace_the_zeros, GCF = T)
   
+  
+  
+  R_GCD_Oracle_400_Random_scheme_nothing_LC = GCD_oracle_random_nothing(Data1_Random$real_graph, pulsar_gip_400_Random_gl,gcvec_extended_random1_LC, LC = TRUE)
+  
+  R_GCD_Oracle_400_Random_scheme_random_noise_LC = GCD_oracle_random_nothing(Data1_Random$real_graph, pulsar_gip_400_Random_gl,gcvec_extended_random2_LC, LC=TRUE)
+  
+  R_GCD_Oracle_400_Random_scheme_random_noise_both_LC = GCD_oracle_random(Data1_Random$real_graph, pulsar_gip_400_Random_gl,gcvec_extended_random2_LC, GCF = T)
+  
+  R_GCD_Oracle_400_Random_scheme_random_vector_LC = GCD_oracle_random(Data1_Random$real_graph, pulsar_gip_400_Random_gl,gcvec_extended_random3_LC, LC = T)
+  
+  R_GCD_Oracle_400_Random_scheme_both_LC = GCD_oracle_random(Data1_Random$real_graph, pulsar_gip_400_Random_gl,gcvec_extended_random2_LC, LC = T)
+  
+  R_GCD_Oracle_400_HUB_scheme_replace_zeros_LC = GCD_oracle_random(Data1_Random$real_graph, pulsar_gip_400_Random_gl,gcvec_extended_random_replace_the_zeros_LC, GCF = T)
   #GCD GIP calculation
   
   R_GCD_gip_hub_400_gl = Function_GCD_data(pulsar_gip_400_Random_gl, Data1_Random$real_graph)
@@ -2639,6 +3181,14 @@ for(i in 2:11){
   R_GCD_Oracle_results_strategy6 = append(R_GCD_Oracle_results_strategy6, list(R_GCD_Oracle_400_HUB_scheme_replace_zeros))
   
   
+  R_GCD_Oracle_results_strategy1_LC = append(R_GCD_Oracle_results_strategy1_LC, list(R_GCD_Oracle_400_Random_scheme_nothing_LC))
+  R_GCD_Oracle_results_strategy2_LC = append(R_GCD_Oracle_results_strategy2_LC, list(R_GCD_Oracle_400_Random_scheme_random_noise_LC))
+  R_GCD_Oracle_results_strategy3_LC = append(R_GCD_Oracle_results_strategy3_LC, list(R_GCD_Oracle_400_Random_scheme_random_vector_LC))
+  R_GCD_Oracle_results_strategy4_LC = append(R_GCD_Oracle_results_strategy4_LC, list(R_GCD_Oracle_400_Random_scheme_both_LC))
+  R_GCD_Oracle_results_strategy5_LC = append(R_GCD_Oracle_results_strategy5_LC, list(R_GCD_Oracle_400_Random_scheme_random_noise_both_LC))
+  R_GCD_Oracle_results_strategy6_LC = append(R_GCD_Oracle_results_strategy6_LC, list(R_GCD_Oracle_400_HUB_scheme_replace_zeros_LC))
+  
+  
   #GCD oracle better results
   R_GCD_Oracle_res_strategy1 = append(R_GCD_Oracle_res_strategy1, list(R_HD_Hub_400[which.min(R_GCD_Oracle_400_Random_scheme_nothing)]))
   R_GCD_Oracle_res_strategy2 = append(R_GCD_Oracle_res_strategy2, list(R_HD_Hub_400[which.min(R_GCD_Oracle_400_Random_scheme_random_noise)]))
@@ -2647,6 +3197,13 @@ for(i in 2:11){
   R_GCD_Oracle_res_strategy5 = append(R_GCD_Oracle_res_strategy5, list(R_HD_Hub_400[which.min(R_GCD_Oracle_400_Random_scheme_random_noise_both)]))
   R_GCD_Oracle_res_strategy6 = append(R_GCD_Oracle_res_strategy6, list(R_HD_Hub_400[which.min(R_GCD_Oracle_400_HUB_scheme_replace_zeros)]))
   
+  
+  R_GCD_Oracle_res_strategy1_LC = append(R_GCD_Oracle_res_strategy1_LC, list(R_HD_Hub_400[which.min(R_GCD_Oracle_400_Random_scheme_nothing_LC)]))
+  R_GCD_Oracle_res_strategy2_LC = append(R_GCD_Oracle_res_strategy2_LC, list(R_HD_Hub_400[which.min(R_GCD_Oracle_400_Random_scheme_random_noise_LC)]))
+  R_GCD_Oracle_res_strategy3_LC = append(R_GCD_Oracle_res_strategy3_LC, list(R_HD_Hub_400[which.min(R_GCD_Oracle_400_Random_scheme_random_vector_LC)]))
+  R_GCD_Oracle_res_strategy4_LC = append(R_GCD_Oracle_res_strategy4_LC, list(R_HD_Hub_400[which.min(R_GCD_Oracle_400_Random_scheme_both_LC)]))
+  R_GCD_Oracle_res_strategy5_LC = append(R_GCD_Oracle_res_strategy5_LC, list(R_HD_Hub_400[which.min(R_GCD_Oracle_400_Random_scheme_random_noise_both_LC)]))
+  R_GCD_Oracle_res_strategy6_LC = append(R_GCD_Oracle_res_strategy6_LC, list(R_HD_Hub_400[which.min(R_GCD_Oracle_400_HUB_scheme_replace_zeros_LC)]))
   #HD res
   
   R_Hamming_dist_res = append(R_Hamming_dist_res, list(R_HD_Hub_400))
@@ -2667,6 +3224,14 @@ for(i in 2:11){
   R_GCD_GIP_results_strategy5 = append(R_GCD_GIP_results_strategy5, list(R_GCD_gip_hub_400_gl$mean_gcd5))
   R_GCD_GIP_results_strategy6 = append(R_GCD_GIP_results_strategy6, list(R_GCD_gip_hub_400_gl$mean_gcd6))
   
+  
+  R_GCD_GIP_results_strategy1_LC = append(R_GCD_GIP_results_strategy1_LC, list(R_GCD_gip_hub_400_gl$mean_gcd1_LC))
+  R_GCD_GIP_results_strategy2_LC = append(R_GCD_GIP_results_strategy2_LC, list(R_GCD_gip_hub_400_gl$mean_gcd2_LC))
+  R_GCD_GIP_results_strategy3_LC = append(R_GCD_GIP_results_strategy3_LC, list(R_GCD_gip_hub_400_gl$mean_gcd3_LC))
+  R_GCD_GIP_results_strategy4_LC = append(R_GCD_GIP_results_strategy4_LC, list(R_GCD_gip_hub_400_gl$mean_gcd4_LC))
+  R_GCD_GIP_results_strategy5_LC = append(R_GCD_GIP_results_strategy5_LC, list(R_GCD_gip_hub_400_gl$mean_gcd5_LC))
+  R_GCD_GIP_results_strategy6_LC = append(R_GCD_GIP_results_strategy6_LC, list(R_GCD_gip_hub_400_gl$mean_gcd6_LC))
+  
   #GCD GIP res
   
   R_GCD_GIP_res_strategy1 = append(R_GCD_GIP_res_strategy1, list(R_HD_Hub_400[which.min(R_GCD_gip_hub_400_gl$mean_gcd1)]))
@@ -2675,6 +3240,15 @@ for(i in 2:11){
   R_GCD_GIP_res_strategy4 = append(R_GCD_GIP_res_strategy4, list(R_HD_Hub_400[which.min(R_GCD_gip_hub_400_gl$mean_gcd4)]))
   R_GCD_GIP_res_strategy5 = append(R_GCD_GIP_res_strategy5, list(R_HD_Hub_400[which.min(R_GCD_gip_hub_400_gl$mean_gcd5)]))
   R_GCD_GIP_res_strategy6 = append(R_GCD_GIP_res_strategy6, list(R_HD_Hub_400[which.min(R_GCD_gip_hub_400_gl$mean_gcd6)]))
+  
+  
+  
+  R_GCD_GIP_res_strategy1_LC = append(R_GCD_GIP_res_strategy1_LC, list(R_HD_Hub_400[which.min(R_GCD_gip_hub_400_gl$mean_gcd1_LC)]))
+  R_GCD_GIP_res_strategy2_LC = append(R_GCD_GIP_res_strategy2_LC, list(R_HD_Hub_400[which.min(R_GCD_gip_hub_400_gl$mean_gcd2_LC)]))
+  R_GCD_GIP_res_strategy3_LC = append(R_GCD_GIP_res_strategy3_LC, list(R_HD_Hub_400[which.min(R_GCD_gip_hub_400_gl$mean_gcd3_LC)]))
+  R_GCD_GIP_res_strategy4_LC = append(R_GCD_GIP_res_strategy4_LC, list(R_HD_Hub_400[which.min(R_GCD_gip_hub_400_gl$mean_gcd4_LC)]))
+  R_GCD_GIP_res_strategy5_LC = append(R_GCD_GIP_res_strategy5_LC, list(R_HD_Hub_400[which.min(R_GCD_gip_hub_400_gl$mean_gcd5_LC)]))
+  R_GCD_GIP_res_strategy6_LC = append(R_GCD_GIP_res_strategy6_LC, list(R_HD_Hub_400[which.min(R_GCD_gip_hub_400_gl$mean_gcd6_LC)]))
   
 }
 
@@ -2714,6 +3288,46 @@ for(i in R_GCD_GIP_res_strategy6){
   vector_R_GCD_GIP_res_strategy6 = c(vector_R_GCD_GIP_res_strategy6,i)
 }
 
+
+
+
+vector_R_GCD_GIP_res_strategy1_LC = c()
+vector_R_GCD_GIP_res_strategy2_LC = c()
+vector_R_GCD_GIP_res_strategy3_LC = c()
+vector_R_GCD_GIP_res_strategy4_LC = c()
+vector_R_GCD_GIP_res_strategy5_LC = c()
+vector_R_GCD_GIP_res_strategy6_LC = c()
+
+
+for(i in R_GCD_GIP_res_strategy1_LC){
+  vector_R_GCD_GIP_res_strategy1_LC = c(vector_R_GCD_GIP_res_strategy1_LC,i)
+}
+
+for(i in R_GCD_GIP_res_strategy2_LC){
+  vector_R_GCD_GIP_res_strategy2_LC = c(vector_R_GCD_GIP_res_strategy2_LC,i)
+}
+
+for(i in R_GCD_GIP_res_strategy3_LC){
+  vector_R_GCD_GIP_res_strategy3_LC = c(vector_R_GCD_GIP_res_strategy3_LC,i)
+}
+
+for(i in R_GCD_GIP_res_strategy4_LC){
+  vector_R_GCD_GIP_res_strategy4_LC = c(vector_R_GCD_GIP_res_strategy4_LC,i)
+}
+
+for(i in R_GCD_GIP_res_strategy5_LC){
+  vector_R_GCD_GIP_res_strategy5_LC = c(vector_R_GCD_GIP_res_strategy5_LC,i)
+}
+
+for(i in R_GCD_GIP_res_strategy6_LC){
+  vector_R_GCD_GIP_res_strategy6_LC = c(vector_R_GCD_GIP_res_strategy6_LC,i)
+}
+
+
+
+
+
+
 vector_R_GCD_Oracle_res_strategy1 = c()
 vector_R_GCD_Oracle_res_strategy2 = c()
 vector_R_GCD_Oracle_res_strategy3 = c()
@@ -2746,6 +3360,45 @@ for(i in R_GCD_Oracle_res_strategy6){
   vector_R_GCD_Oracle_res_strategy6 = c(vector_R_GCD_Oracle_res_strategy6,i)
 }
 
+
+
+
+
+vector_R_GCD_Oracle_res_strategy1_LC = c()
+vector_R_GCD_Oracle_res_strategy2_LC = c()
+vector_R_GCD_Oracle_res_strategy3_LC = c()
+vector_R_GCD_Oracle_res_strategy4_LC = c()
+vector_R_GCD_Oracle_res_strategy5_LC = c()
+vector_R_GCD_Oracle_res_strategy6_LC = c()
+
+
+for(i in R_GCD_Oracle_res_strategy1_LC){
+  vector_R_GCD_Oracle_res_strategy1_LC = c(vector_R_GCD_Oracle_res_strategy1_LC,i)
+}
+
+for(i in R_GCD_Oracle_res_strategy2_LC){
+  vector_R_GCD_Oracle_res_strategy2_LC = c(vector_R_GCD_Oracle_res_strategy2_LC,i)
+}
+
+for(i in R_GCD_Oracle_res_strategy3_LC){
+  vector_R_GCD_Oracle_res_strategy3_LC = c(vector_R_GCD_Oracle_res_strategy3_LC,i)
+}
+
+for(i in R_GCD_Oracle_res_strategy4_LC){
+  vector_R_GCD_Oracle_res_strategy4_LC = c(vector_R_GCD_Oracle_res_strategy4_LC,i)
+}
+
+for(i in R_GCD_Oracle_res_strategy5_LC){
+  vector_R_GCD_Oracle_res_strategy5_LC = c(vector_R_GCD_Oracle_res_strategy5_LC,i)
+}
+
+for(i in R_GCD_Oracle_res_strategy6_LC){
+  vector_R_GCD_Oracle_res_strategy6_LC = c(vector_R_GCD_Oracle_res_strategy6_LC,i)
+}
+
+
+
+
 vector_R_Stars_01_res = c()
 vector_R_Stars_005_res = c()
 
@@ -2768,6 +3421,8 @@ for(i in R_Hamming_dist_res){
 
 res_tot_random = cbind(vector_R_GCD_GIP_res_strategy1, vector_R_GCD_GIP_res_strategy2, vector_R_GCD_GIP_res_strategy3, vector_R_GCD_GIP_res_strategy4,vector_R_GCD_GIP_res_strategy5, vector_R_GCD_GIP_res_strategy6,
                        vector_R_GCD_Oracle_res_strategy1, vector_R_GCD_Oracle_res_strategy2, vector_R_GCD_Oracle_res_strategy3, vector_R_GCD_Oracle_res_strategy4, vector_R_GCD_Oracle_res_strategy5, vector_R_GCD_Oracle_res_strategy6,
+                       vector_R_GCD_GIP_res_strategy1_LC, vector_R_GCD_GIP_res_strategy2_LC, vector_R_GCD_GIP_res_strategy3_LC, vector_R_GCD_GIP_res_strategy4_LC,vector_R_GCD_GIP_res_strategy5_LC, vector_R_GCD_GIP_res_strategy6_LC,
+                       vector_R_GCD_Oracle_res_strategy1_LC, vector_R_GCD_Oracle_res_strategy2_LC, vector_R_GCD_Oracle_res_strategy3_LC, vector_R_GCD_Oracle_res_strategy4_LC, vector_R_GCD_Oracle_res_strategy5_LC, vector_R_GCD_Oracle_res_strategy6_LC,
                        vector_R_Stars_005_res, vector_R_Stars_01_res, Best_HD_R)
 
 res_tot_random_df = as.data.frame(res_tot_random)
@@ -2839,6 +3494,65 @@ colnames(res_GCD_Oracle_S6_df) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6"
 
 
 
+res_GCD_Oracle_S1_LC = c()
+for(i in R_GCD_Oracle_results_strategy1_LC){
+  res_GCD_Oracle_S1_LC = cbind(res_GCD_Oracle_S1_LC, i)
+}
+
+res_GCD_Oracle_S1_df_LC = as.data.frame(res_GCD_Oracle_S1_LC)
+colnames(res_GCD_Oracle_S1_df_LC) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+
+
+res_GCD_Oracle_S2_LC = c()
+for(i in R_GCD_Oracle_results_strategy2_LC){
+  res_GCD_Oracle_S2_LC = cbind(res_GCD_Oracle_S2_LC, i)
+}
+
+res_GCD_Oracle_S2_df_LC = as.data.frame(res_GCD_Oracle_S2_LC)
+colnames(res_GCD_Oracle_S2_df_LC) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+
+
+res_GCD_Oracle_S3_LC = c()
+for(i in R_GCD_Oracle_results_strategy3_LC){
+  res_GCD_Oracle_S3_LC = cbind(res_GCD_Oracle_S3_LC, i)
+}
+
+res_GCD_Oracle_S3_df_LC = as.data.frame(res_GCD_Oracle_S3_LC)
+colnames(res_GCD_Oracle_S3_df_LC) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+
+
+res_GCD_Oracle_S4_LC = c()
+for(i in R_GCD_Oracle_results_strategy4_LC){
+  res_GCD_Oracle_S4_LC = cbind(res_GCD_Oracle_S4_LC, i)
+}
+
+res_GCD_Oracle_S4_df_LC = as.data.frame(res_GCD_Oracle_S4_LC)
+colnames(res_GCD_Oracle_S4_df_LC) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+
+
+res_GCD_Oracle_S5_LC = c()
+for(i in R_GCD_Oracle_results_strategy5_LC){
+  res_GCD_Oracle_S5_LC = cbind(res_GCD_Oracle_S5_LC, i)
+}
+
+res_GCD_Oracle_S5_df_LC = as.data.frame(res_GCD_Oracle_S5_LC)
+colnames(res_GCD_Oracle_S5_df_LC) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+
+
+res_GCD_Oracle_S6_LC = c()
+for(i in R_GCD_Oracle_results_strategy6_LC){
+  res_GCD_Oracle_S6_LC = cbind(res_GCD_Oracle_S6_LC, i)
+}
+
+res_GCD_Oracle_S6_df_LC = as.data.frame(res_GCD_Oracle_S6_LC)
+colnames(res_GCD_Oracle_S6_df_LC) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+
+
+
+
+
+
+
 res_GCD_GIP_S1 = c()
 for(i in R_GCD_GIP_results_strategy1){
   res_GCD_GIP_S1 = cbind(res_GCD_GIP_S1, i)
@@ -2895,6 +3609,63 @@ colnames(res_GCD_GIP_S6_df) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "
 
 
 
+res_GCD_GIP_S1_LC = c()
+for(i in R_GCD_GIP_results_strategy1_LC){
+  res_GCD_GIP_S1_LC = cbind(res_GCD_GIP_S1_LC, i)
+}
+
+res_GCD_GIP_S1_df_LC = as.data.frame(res_GCD_GIP_S1_LC)
+colnames(res_GCD_GIP_S1_df_LC) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+
+
+res_GCD_GIP_S2_LC = c()
+for(i in R_GCD_GIP_results_strategy2_LC){
+  res_GCD_GIP_S2_LC = cbind(res_GCD_GIP_S2_LC, i)
+}
+
+res_GCD_GIP_S2_df_LC = as.data.frame(res_GCD_GIP_S2_LC)
+colnames(res_GCD_GIP_S2_df_LC) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+
+
+
+res_GCD_GIP_S3_LC = c()
+for(i in R_GCD_GIP_results_strategy3_LC){
+  res_GCD_GIP_S3_LC = cbind(res_GCD_GIP_S3_LC, i)
+}
+
+res_GCD_GIP_S3_df_LC = as.data.frame(res_GCD_GIP_S3_LC)
+colnames(res_GCD_GIP_S3_df_LC) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+
+
+res_GCD_GIP_S4_LC = c()
+for(i in R_GCD_GIP_results_strategy4_LC){
+  res_GCD_GIP_S4_LC = cbind(res_GCD_GIP_S4_LC, i)
+}
+
+res_GCD_GIP_S4_df_LC = as.data.frame(res_GCD_GIP_S4_LC)
+colnames(res_GCD_GIP_S4_df_LC) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+
+res_GCD_GIP_S5_LC = c()
+for(i in R_GCD_GIP_results_strategy5_LC){
+  res_GCD_GIP_S5_LC = cbind(res_GCD_GIP_S5_LC, i)
+}
+
+res_GCD_GIP_S5_df_LC = as.data.frame(res_GCD_GIP_S5_LC)
+colnames(res_GCD_GIP_S5_df_LC) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+
+res_GCD_GIP_S6_LC = c()
+for(i in R_GCD_GIP_results_strategy6_LC){
+  res_GCD_GIP_S6_LC = cbind(res_GCD_GIP_S6_LC, i)
+}
+
+res_GCD_GIP_S6_df_LC = as.data.frame(res_GCD_GIP_S6_LC)
+colnames(res_GCD_GIP_S6_df_LC) = c("sim1", "sim2", "sim3", "sim4", "sim5","sim6", "sim7", "sim8", "sim9", "sim10")
+
+
+
+
+
+
 
 write.csv(res_tot_random_df, "tot_results_random_simulation.csv")
 
@@ -2908,6 +3679,14 @@ write.csv(res_GCD_Oracle_S5_df, "simulations_GCD_Oracle_S5_random.csv")
 write.csv(res_GCD_Oracle_S6_df, "simulations_GCD_Oracle_S6_random.csv")
 
 
+write.csv(res_GCD_Oracle_S1_df_LC, "simulations_GCD_Oracle_S1_random_LC.csv")
+write.csv(res_GCD_Oracle_S2_df_LC, "simulations_GCD_Oracle_S2_random_LC.csv")
+write.csv(res_GCD_Oracle_S3_df_LC, "simulations_GCD_Oracle_S3_random_LC.csv")
+write.csv(res_GCD_Oracle_S4_df_LC, "simulations_GCD_Oracle_S4_random_LC.csv")
+write.csv(res_GCD_Oracle_S5_df_LC, "simulations_GCD_Oracle_S5_random_LC.csv")
+write.csv(res_GCD_Oracle_S6_df_LC, "simulations_GCD_Oracle_S6_random_LC.csv")
+
+
 write.csv(res_GCD_GIP_S1_df, "simulations_GCD_GIP_S1_random.csv")
 write.csv(res_GCD_GIP_S2_df, "simulations_GCD_GIP_S2_random.csv")
 write.csv(res_GCD_GIP_S3_df, "simulations_GCD_GIP_S3_random.csv")
@@ -2916,4 +3695,9 @@ write.csv(res_GCD_GIP_S5_df, "simulations_GCD_GIP_S5_random.csv")
 write.csv(res_GCD_GIP_S6_df, "simulations_GCD_GIP_S6_random.csv")
 
 
-
+write.csv(res_GCD_GIP_S1_df_LC, "simulations_GCD_GIP_S1_random_LC.csv")
+write.csv(res_GCD_GIP_S2_df_LC, "simulations_GCD_GIP_S2_random_LC.csv")
+write.csv(res_GCD_GIP_S3_df_LC, "simulations_GCD_GIP_S3_random_LC.csv")
+write.csv(res_GCD_GIP_S4_df_LC, "simulations_GCD_GIP_S4_random_LC.csv")
+write.csv(res_GCD_GIP_S5_df_LC, "simulations_GCD_GIP_S5_random_LC.csv")
+write.csv(res_GCD_GIP_S6_df_LC, "simulations_GCD_GIP_S6_random_LC.csv")
