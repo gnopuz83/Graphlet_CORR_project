@@ -22,4 +22,4 @@
 #SBATCH --error="/home/roberto_olayo/Graphlet_CORR_project/output.err"
 
 #------- Command -------
-Rscript Script_simulation_for_cluster_HUB_Random.R
+/opt/bayresq.net/R/R-4.2.0/lib/R/bin/Rscript Script_simulation_for_cluster_HUB_Random.R
